@@ -34,6 +34,9 @@ class MainFrame(wx.Frame):
 		self.ID_ADD_URL_IMAGE = wx.NewIdRef()
 		self.ID_MANAGE_ACCOUNTS = wx.NewIdRef()
 		self.ID_PREFERENCES = wx.NewIdRef()
+		self.ID_TOGGLE_RECORDING = wx.NewIdRef()
+		self.ID_TRANSCRIBE_AUDIO = wx.NewIdRef()
+
 		self.init_accelerators()
 		if sys.platform == "win32":
 			self.tray_icon = TaskBarIcon(self)
@@ -104,6 +107,14 @@ class MainFrame(wx.Frame):
 		self.Bind(
 			wx.EVT_MENU, lambda e: self.on_add_image(e, True), add_image_url
 		)
+		self.transcribe_audio_microphone_item = conversation_menu.Append(
+			wx.ID_ANY, _("Transcribe audio from microphone") + "... (Ctrl+R)"
+		)
+		self.Bind(wx.EVT_MENU, lambda e: self.on_transcribe_audio(e, True))
+		self.transcribe_audio_file_item = conversation_menu.Append(
+			wx.ID_ANY, _("Transcribe audio file") + "... (Ctrl+Shift+R)"
+		)
+		self.Bind(wx.EVT_MENU, lambda e: self.on_transcribe_audio(e, False))
 		conversation_menu.AppendSeparator()
 		manage_accounts_item = conversation_menu.Append(
 			wx.ID_ANY,
@@ -176,6 +187,16 @@ class MainFrame(wx.Frame):
 			wx.EVT_MENU, self.on_manage_accounts, id=self.ID_MANAGE_ACCOUNTS
 		)
 		self.Bind(wx.EVT_MENU, self.on_preferences, id=self.ID_PREFERENCES)
+		self.Bind(
+			wx.EVT_MENU,
+			lambda evt: self.on_transcribe_audio(evt, True),
+			id=self.ID_TOGGLE_RECORDING,
+		)
+		self.Bind(
+			wx.EVT_MENU,
+			lambda evt: self.on_transcribe_audio(evt, False),
+			id=self.ID_TRANSCRIBE_AUDIO,
+		)
 
 		self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_tab_changed)
 
@@ -186,6 +207,12 @@ class MainFrame(wx.Frame):
 			(wx.ACCEL_CTRL, ord('U'), self.ID_ADD_URL_IMAGE),
 			(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('A'), self.ID_MANAGE_ACCOUNTS),
 			(wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('P'), self.ID_PREFERENCES),
+			(wx.ACCEL_CTRL, ord('R'), self.ID_TOGGLE_RECORDING),
+			(
+				wx.ACCEL_CTRL | wx.ACCEL_SHIFT,
+				ord('R'),
+				self.ID_TRANSCRIBE_AUDIO,
+			),
 		]
 
 		for i in range(1, 10):
@@ -366,6 +393,20 @@ class MainFrame(wx.Frame):
 			current_tab.add_image_url()
 		else:
 			current_tab.add_image_files()
+
+	def on_transcribe_audio(
+		self, event: wx.Event, from_microphone: bool = False
+	):
+		current_tab = self.current_tab
+		if not current_tab:
+			wx.MessageBox(
+				_("No conversation selected"), _("Error"), wx.OK | wx.ICON_ERROR
+			)
+			return
+		if from_microphone:
+			current_tab.toggle_recording(event)
+		else:
+			current_tab.on_transcribe_audio_file()
 
 	def refresh_tabs(self):
 		for tab in self.tabs_panels:
