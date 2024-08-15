@@ -21,6 +21,7 @@ from basilisk.conversation import (
 	Message,
 	MessageBlock,
 	MessageRoleEnum,
+	RequestParams,
 	TextMessageContent,
 )
 from basilisk.gui.html_view_window import show_html_view_window
@@ -280,18 +281,30 @@ class ConversationTab(wx.Panel):
 		self.refresh_images_list()
 
 	def update_ui(self):
-		controls = (
-			self.max_tokens_label,
-			self.max_tokens_spin_ctrl,
-			self.temperature_label,
-			self.temperature_spinner,
-			self.top_p_label,
-			self.top_p_spinner,
-			self.stream_mode,
+		unsupported_request_params = (
+			self.current_engine.unsupported_request_params
 		)
-		for control in controls:
-			control.Enable(config.conf.general.advanced_mode)
-			control.Show(config.conf.general.advanced_mode)
+		control_params = {
+			RequestParams.MAX_TOKENS: (
+				self.max_tokens_label,
+				self.max_tokens_spin_ctrl,
+			),
+			RequestParams.TEMPERATURE: (
+				self.temperature_label,
+				self.temperature_spinner,
+			),
+			RequestParams.TOP_P: (self.top_p_label, self.top_p_spinner),
+			RequestParams.STREAM: (self.stream_mode,),
+		}
+
+		for param, controls in control_params.items():
+			should_enabled = (
+				config.conf.general.advanced_mode
+				and param not in unsupported_request_params
+			)
+			for control in controls:
+				control.Enable(should_enabled)
+				control.Show(should_enabled)
 		self.Layout()
 
 	def on_account_change(self, event: wx.CommandEvent):
@@ -330,6 +343,7 @@ class ConversationTab(wx.Panel):
 		self.toggle_record_btn.Enable(
 			ProviderCapability.STT in account.provider.engine_cls.capabilities
 		)
+		self.update_ui()
 
 	def on_images_context_menu(self, event: wx.ContextMenuEvent):
 		selected = self.images_list.GetFirstSelected()
@@ -1156,10 +1170,19 @@ class ConversationTab(wx.Panel):
 				),
 			),
 			model=model,
-			temperature=self.temperature_spinner.GetValue(),
-			top_p=self.top_p_spinner.GetValue(),
-			max_tokens=self.max_tokens_spin_ctrl.GetValue(),
-			stream=self.stream_mode.GetValue(),
+		)
+		unsupported_request_params = (
+			self.current_engine.unsupported_request_params
+		)
+		if RequestParams.MAX_TOKENS not in unsupported_request_params:
+			new_block.request.max_tokens = self.max_tokens_spin_ctrl.GetValue()
+		if RequestParams.TEMPERATURE not in unsupported_request_params:
+			new_block.request.temperature = self.temperature_spinner.GetValue()
+		if RequestParams.TOP_P not in unsupported_request_params:
+			new_block.request.top_p = self.top_p_spinner.GetValue()
+		new_block.stream = (
+			RequestParams.STREAM not in unsupported_request_params
+			and self.stream_mode.GetValue()
 		)
 		completion_kw = {
 			"engine": self.current_engine,

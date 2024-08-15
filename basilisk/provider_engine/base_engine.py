@@ -6,7 +6,12 @@ from os import linesep
 from typing import TYPE_CHECKING, Any
 
 from basilisk.consts import APP_NAME, APP_SOURCE_URL
-from basilisk.conversation import Conversation, Message, MessageBlock
+from basilisk.conversation import (
+	Conversation,
+	Message,
+	MessageBlock,
+	RequestParams,
+)
 from basilisk.provider_ai_model import ProviderAIModel
 from basilisk.provider_capability import ProviderCapability
 
@@ -16,6 +21,7 @@ if TYPE_CHECKING:
 
 class BaseEngine(ABC):
 	capabilities: set[ProviderCapability] = set()
+	unsupported_request_params: set[RequestParams] = set()
 
 	def __init__(self, account: Account) -> None:
 		self.account = account
