@@ -71,6 +71,7 @@ class BaseEngine(ABC):
 				]
 			)
 		messages.append(self.handle_message(new_block.request))
+		print("*****", messages)
 		return messages
 
 	@abstractmethod

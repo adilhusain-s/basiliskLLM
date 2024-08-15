@@ -1157,11 +1157,11 @@ class ConversationTab(wx.Panel):
 			self.current_engine.unsupported_request_params
 		)
 		if RequestParams.MAX_TOKENS not in unsupported_request_params:
-			new_block.request.max_tokens = self.max_tokens_spin_ctrl.GetValue()
+			new_block.max_tokens = self.max_tokens_spin_ctrl.GetValue()
 		if RequestParams.TEMPERATURE not in unsupported_request_params:
-			new_block.request.temperature = self.temperature_spinner.GetValue()
+			new_block.temperature = self.temperature_spinner.GetValue()
 		if RequestParams.TOP_P not in unsupported_request_params:
-			new_block.request.top_p = self.top_p_spinner.GetValue()
+			new_block.top_p = self.top_p_spinner.GetValue()
 		new_block.stream = (
 			RequestParams.STREAM not in unsupported_request_params
 			and self.stream_mode.GetValue()

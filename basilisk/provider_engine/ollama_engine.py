@@ -71,23 +71,27 @@ class OllamaEngine(BaseEngine):
 	def handle_message(self, message: Message) -> dict[str, Any]:
 		content = ""
 		images = []
-		for part in message.content:
-			if isinstance(part, str):
-				content += part
-			elif isinstance(part, ImageFile):
-				if part.type == ImageFileTypes.IMAGE_LOCAL:
-					images.append(part.location)
-				elif part.type == ImageFileTypes.IMAGE_URL:
-					raise ValueError("Image URLs are not supported")
-			else:
-				raise ValueError(f"Unsupported message part: {part}")
+		if isinstance(message.content, list):
+			for part in message.content:
+				if isinstance(part, str):
+					content += part
+				elif isinstance(part, ImageFile):
+					if part.type == ImageFileTypes.IMAGE_LOCAL:
+						images.append(part._location)
+					elif part.type == ImageFileTypes.IMAGE_URL:
+						raise ValueError("Image URLs are not supported")
+				else:
+					raise ValueError(f"Unsupported message part: {part}")
 
-		output = {"role": message.role.value}
-		if content:
-			output["content"] = content
-		if images:
-			output["images"] = images
-		return output
+			output = {"role": message.role.value}
+			if content:
+				output["content"] = content
+			if images:
+				output["images"] = images
+			return output
+		if isinstance(message.content, str):
+			return {"role": message.role.value, "content": message.content}
+		raise ValueError(f"Unsupported message content: {message.content}")
 
 	def completion(
 		self,
