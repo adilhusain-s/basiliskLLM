@@ -17,12 +17,10 @@ import basilisk.config as config
 from basilisk import global_vars
 from basilisk.conversation import (
 	Conversation,
-	ImageUrlMessageContent,
 	Message,
 	MessageBlock,
 	MessageRoleEnum,
 	RequestParams,
-	TextMessageContent,
 )
 from basilisk.gui.html_view_window import show_html_view_window
 from basilisk.gui.search_dialog import SearchDialog, SearchDirection
@@ -906,14 +904,12 @@ class ConversationTab(wx.Panel):
 		return accounts
 
 	def extract_text_from_message(
-		self, content: list[TextMessageContent | ImageUrlMessageContent] | str
+		self, content: list[ImageFile | str] | str
 	) -> str:
-		if isinstance(content, str):
-			return content
 		text = ""
 		for item in content:
-			if item.type == "text":
-				text += item.text
+			if isinstance(item, str):
+				text += item
 		return text
 
 	def append_text_and_create_segment(
@@ -1019,25 +1015,11 @@ class ConversationTab(wx.Panel):
 	) -> list[dict[str, str]]:
 		if not images_files:
 			images_files = self.image_files
-		if not images_files:
-			return prompt
 		content = []
 		if prompt:
-			content.append({"type": "text", "text": prompt})
-		for image_file in images_files:
-			content.append(
-				{
-					"type": "image_url",
-					"image_url": {
-						"url": image_file.get_url(
-							resize=config.conf.images.resize,
-							max_width=config.conf.images.max_width,
-							max_height=config.conf.images.max_height,
-							quality=config.conf.images.quality,
-						)
-					},
-				}
-			)
+			content.append(prompt)
+		if images_files:
+			content.extend(images_files)
 		return content
 
 	def transcribe_audio_file(self, audio_file: str = None):
@@ -1225,9 +1207,7 @@ class ConversationTab(wx.Panel):
 			return
 		new_block = kwargs["new_block"]
 		if kwargs.get("stream", False):
-			new_block.response = Message(
-				role=MessageRoleEnum.ASSISTANT, content=""
-			)
+			new_block.response = Message(role=MessageRoleEnum.ASSISTANT)
 			wx.CallAfter(self._pre_handle_completion_with_stream, new_block)
 			for chunk in self.current_engine.completion_response_with_stream(
 				response

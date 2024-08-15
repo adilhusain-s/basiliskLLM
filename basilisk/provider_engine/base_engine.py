@@ -42,8 +42,15 @@ class BaseEngine(ABC):
 		"""
 		pass
 
-	@staticmethod
+	@abstractmethod
+	def handle_message(self, message: Message) -> Message:
+		"""
+		Handle message
+		"""
+		pass
+
 	def get_messages(
+		self,
 		new_block: MessageBlock,
 		conversation: Conversation,
 		system_message: Message | None,
@@ -53,17 +60,17 @@ class BaseEngine(ABC):
 		"""
 		messages = []
 		if system_message:
-			messages.append(system_message.model_dump(mode="json"))
+			messages.append(self.handle_message(system_message))
 		for message_block in conversation.messages:
 			if not message_block.response:
 				continue
 			messages.extend(
 				[
-					message_block.request.model_dump(mode="json"),
-					message_block.response.model_dump(mode="json"),
+					self.handle_message(message_block.request),
+					self.handle_message(message_block.response),
 				]
 			)
-		messages.append(new_block.request.model_dump(mode="json"))
+		messages.append(self.handle_message(new_block.request))
 		return messages
 
 	@abstractmethod
