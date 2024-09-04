@@ -111,6 +111,14 @@ providers = [
 		env_var_name_api_key="OPENROUTER_API_KEY",
 		engine_cls_path="basilisk.provider_engine.openrouter_engine.OpenRouterEngine",
 	),
+	Provider(
+		id="ollama",
+		name="Ollama",
+		api_type=ProviderAPIType.OLLAMA,
+		organization_mode_available=False,
+		require_api_key=False,
+		engine_cls_path="basilisk.provider_engine.ollama_engine.OllamaEngine",
+	),
 ]
 
 
