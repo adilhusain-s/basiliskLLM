@@ -82,41 +82,52 @@ class ConversationTab(wx.Panel):
 		self.update_ui()
 
 	def init_ui(self):
-		sizer = wx.BoxSizer(wx.VERTICAL)
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		lsizer = wx.BoxSizer(wx.VERTICAL)
+		rsizer = wx.BoxSizer(wx.VERTICAL)
+		hsizer.Add(lsizer, flags=wx.SizerFlags(2).Border(wx.ALL, 10))
+		hsizer.Add(rsizer, flags=wx.SizerFlags(1).Border(wx.ALL, 10))
 
 		label = wx.StaticText(
 			self,
 			# Translators: This is a label for account in the main window
 			label=_("&Account:"),
 		)
-		sizer.Add(label, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
 		self.account_combo = wx.ComboBox(
 			self, style=wx.CB_READONLY, choices=self.get_display_accounts()
 		)
 		self.account_combo.Bind(wx.EVT_COMBOBOX, self.on_account_change)
 		if len(self.account_combo.GetItems()) > 0:
 			self.account_combo.SetSelection(0)
-		sizer.Add(self.account_combo, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(
+			self.account_combo, proportion=0, flag=wx.EXPAND | wx.ALL, border=5
+		)
 
 		label = wx.StaticText(
 			self,
 			# Translators: This is a label for system prompt in the main window
 			label=_("S&ystem prompt:"),
 		)
-		sizer.Add(label, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
 		self.system_prompt_txt = wx.TextCtrl(
 			self,
 			size=(800, 100),
 			style=wx.TE_MULTILINE | wx.TE_WORDWRAP | wx.HSCROLL,
 		)
-		sizer.Add(self.system_prompt_txt, proportion=1, flag=wx.EXPAND)
+		lsizer.Add(
+			self.system_prompt_txt,
+			proportion=1,
+			flag=wx.EXPAND | wx.ALL,
+			border=10,
+		)
 
 		label = wx.StaticText(
 			self,
 			# Translators: This is a label for user prompt in the main window
 			label=_("&Messages:"),
 		)
-		sizer.Add(label, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
 		self.messages = wx.TextCtrl(
 			self,
 			size=(800, 400),
@@ -127,14 +138,16 @@ class ConversationTab(wx.Panel):
 		)
 		self.messages.Bind(wx.EVT_CONTEXT_MENU, self.on_messages_context_menu)
 		self.messages.Bind(wx.EVT_KEY_DOWN, self.on_messages_key_down)
-		sizer.Add(self.messages, proportion=1, flag=wx.EXPAND)
+		lsizer.Add(
+			self.messages, proportion=1, flag=wx.EXPAND | wx.ALL, border=10
+		)
 
 		label = wx.StaticText(
 			self,
 			# Translators: This is a label for user prompt in the main window
 			label=_("&Prompt:"),
 		)
-		sizer.Add(label, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
 		self.prompt = wx.TextCtrl(
 			self,
 			size=(800, 100),
@@ -143,7 +156,9 @@ class ConversationTab(wx.Panel):
 		self.prompt.Bind(wx.EVT_KEY_DOWN, self.on_prompt_key_down)
 		self.prompt.Bind(wx.EVT_CONTEXT_MENU, self.on_prompt_context_menu)
 		self.prompt.Bind(wx.EVT_TEXT_PASTE, self.on_prompt_paste)
-		sizer.Add(self.prompt, proportion=1, flag=wx.EXPAND)
+		lsizer.Add(
+			self.prompt, proportion=1, flag=wx.EXPAND | wx.ALL, border=10
+		)
 		self.prompt.SetFocus()
 
 		self.images_list_label = wx.StaticText(
@@ -151,7 +166,12 @@ class ConversationTab(wx.Panel):
 			# Translators: This is a label for models in the main window
 			label=_("&Images:"),
 		)
-		sizer.Add(self.images_list_label, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(
+			self.images_list_label,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=5,
+		)
 		self.images_list = wx.ListCtrl(
 			self, size=(800, 100), style=wx.LC_REPORT
 		)
@@ -165,10 +185,12 @@ class ConversationTab(wx.Panel):
 		self.images_list.SetColumnWidth(1, 100)
 		self.images_list.SetColumnWidth(2, 100)
 		self.images_list.SetColumnWidth(3, 200)
-		sizer.Add(self.images_list, proportion=0, flag=wx.ALL | wx.EXPAND)
+		lsizer.Add(
+			self.images_list, proportion=0, flag=wx.ALL | wx.EXPAND, border=10
+		)
 
 		label = wx.StaticText(self, label=_("M&odels:"))
-		sizer.Add(label, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
 		self.model_list = wx.ListCtrl(self, style=wx.LC_REPORT)
 		self.model_list.InsertColumn(0, _("Name"))
 		self.model_list.InsertColumn(1, _("Context window"))
@@ -176,7 +198,9 @@ class ConversationTab(wx.Panel):
 		self.model_list.SetColumnWidth(0, 200)
 		self.model_list.SetColumnWidth(1, 100)
 		self.model_list.SetColumnWidth(2, 100)
-		sizer.Add(self.model_list, proportion=0, flag=wx.ALL | wx.EXPAND)
+		rsizer.Add(
+			self.model_list, proportion=0, flag=wx.ALL | wx.EXPAND, border=10
+		)
 		self.model_list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_model_change)
 		self.model_list.Bind(wx.EVT_KEY_DOWN, self.on_model_key_down)
 
@@ -185,18 +209,33 @@ class ConversationTab(wx.Panel):
 			# Translators: This is a label for max tokens in the main window
 			label=_("Max to&kens:"),
 		)
-		sizer.Add(self.max_tokens_label, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.max_tokens_label,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=5,
+		)
 		self.max_tokens_spin_ctrl = wx.SpinCtrl(
 			self, value='0', min=0, max=2000000
 		)
-		sizer.Add(self.max_tokens_spin_ctrl, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.max_tokens_spin_ctrl,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=10,
+		)
 
 		self.temperature_label = wx.StaticText(
 			self,
 			# Translators: This is a label for temperature in the main window
 			label=_("&Temperature:"),
 		)
-		sizer.Add(self.temperature_label, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.temperature_label,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=5,
+		)
 		self.temperature_spinner = FloatSpin(
 			self,
 			min_val=0.0,
@@ -211,14 +250,21 @@ class ConversationTab(wx.Panel):
 			name=self.temperature_label.GetLabel().replace("&", ""),
 		)
 		self.temperature_spinner._textctrl.SetAccessible(float_spin_accessible)
-		sizer.Add(self.temperature_spinner, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.temperature_spinner,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=10,
+		)
 
 		self.top_p_label = wx.StaticText(
 			self,
 			# Translators: This is a label for top P in the main window
 			label=_("Probabilit&y Mass (top P):"),
 		)
-		sizer.Add(self.top_p_label, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.top_p_label, proportion=0, flag=wx.EXPAND | wx.ALL, border=5
+		)
 		self.top_p_spinner = FloatSpin(
 			self,
 			min_val=0.0,
@@ -233,7 +279,9 @@ class ConversationTab(wx.Panel):
 			name=self.top_p_label.GetLabel().replace("&", ""),
 		)
 		self.top_p_spinner._textctrl.SetAccessible(float_spin_accessible)
-		sizer.Add(self.top_p_spinner, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.top_p_spinner, proportion=0, flag=wx.EXPAND | wx.ALL, border=10
+		)
 
 		self.stream_mode = wx.CheckBox(
 			self,
@@ -241,7 +289,9 @@ class ConversationTab(wx.Panel):
 			label=_("&Stream mode"),
 		)
 		self.stream_mode.SetValue(True)
-		sizer.Add(self.stream_mode, proportion=0, flag=wx.EXPAND)
+		rsizer.Add(
+			self.stream_mode, proportion=0, flag=wx.EXPAND | wx.ALL, border=10
+		)
 
 		btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -252,7 +302,9 @@ class ConversationTab(wx.Panel):
 		)
 		self.submit_btn.Bind(wx.EVT_BUTTON, self.on_submit)
 		self.submit_btn.SetDefault()
-		btn_sizer.Add(self.submit_btn, proportion=0, flag=wx.EXPAND)
+		btn_sizer.Add(
+			self.submit_btn, proportion=0, flag=wx.EXPAND | wx.ALL, border=10
+		)
 
 		self.stop_completion_btn = wx.Button(
 			self,
@@ -260,7 +312,12 @@ class ConversationTab(wx.Panel):
 			label=_("Stop completio&n"),
 		)
 		self.stop_completion_btn.Bind(wx.EVT_BUTTON, self.on_stop_completion)
-		btn_sizer.Add(self.stop_completion_btn, proportion=0, flag=wx.EXPAND)
+		btn_sizer.Add(
+			self.stop_completion_btn,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=10,
+		)
 		self.stop_completion_btn.Hide()
 
 		self.toggle_record_btn = wx.Button(
@@ -268,12 +325,17 @@ class ConversationTab(wx.Panel):
 			# Translators: This is a label for record button in the main window
 			label=_("Record") + " (Ctrl+R)",
 		)
-		btn_sizer.Add(self.toggle_record_btn, proportion=0, flag=wx.EXPAND)
+		btn_sizer.Add(
+			self.toggle_record_btn,
+			proportion=0,
+			flag=wx.EXPAND | wx.ALL,
+			border=10,
+		)
 		self.toggle_record_btn.Bind(wx.EVT_BUTTON, self.toggle_recording)
 
-		sizer.Add(btn_sizer, proportion=0, flag=wx.EXPAND)
+		lsizer.Add(btn_sizer, proportion=0, flag=wx.EXPAND)
 
-		self.SetSizerAndFit(sizer)
+		self.SetSizerAndFit(hsizer)
 
 	def select_default_account(self):
 		accounts = config.accounts()
