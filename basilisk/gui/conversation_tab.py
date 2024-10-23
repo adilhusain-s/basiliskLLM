@@ -32,7 +32,7 @@ from basilisk.message_segment_manager import (
 from basilisk.provider_capability import ProviderCapability
 from basilisk.sound_manager import play_sound, stop_sound
 
-from .base_conversation import BaseConversation
+from .base_conversation import BaseConversation, ProviderAIModel
 from .html_view_window import show_html_view_window
 from .search_dialog import SearchDialog, SearchDirection
 
@@ -217,6 +217,15 @@ class ConversationTab(wx.Panel, BaseConversation):
 	def init_data(self, profile: Optional[config.ConversationProfile]):
 		self.refresh_images_list()
 		self.apply_profile(profile, True)
+
+	@property
+	def system_message(self) -> Optional[Message]:
+		if self.system_prompt_txt.GetValue():
+			return Message(
+				role=MessageRoleEnum.SYSTEM,
+				content=self.system_prompt_txt.GetValue(),
+			)
+		return None
 
 	def on_choose_profile(self, event: wx.KeyEvent):
 		main_frame: MainFrame = wx.GetTopLevelParent(self)
@@ -864,17 +873,14 @@ class ConversationTab(wx.Panel, BaseConversation):
 		for block in self.conversation.messages:
 			self.display_new_block(block)
 
-	def get_content_for_completion(
-		self, images_files: list[ImageFile] = None, prompt: str = None
-	) -> list[dict[str, str]]:
-		if not images_files:
-			images_files = self.image_files
-		if not images_files:
-			return prompt
+	def get_content_for_completion(self) -> list[dict[str, str]]:
+		prompt = self.prompt.GetValue()
+		if not self.image_files:
+			return self.prompt.GetValue()
 		content = []
 		if prompt:
 			content.append({"type": "text", "text": prompt})
-		for image_file in images_files:
+		for image_file in self.image_files:
 			content.append(
 				{
 					"type": "image_url",
@@ -982,45 +988,33 @@ class ConversationTab(wx.Panel, BaseConversation):
 		self.toggle_record_btn.SetLabel(_("Record") + " (Ctrl+R)")
 		self.submit_btn.Enable()
 
-	@ensure_no_task_running
-	def on_submit(self, event: wx.CommandEvent):
-		if not self.submit_btn.IsEnabled():
-			return
-		if not self.prompt.GetValue() and not self.image_files:
-			self.prompt.SetFocus()
-			return
+	def check_model_selection(self):
 		model = self.current_model
-		if not model:
+		if not self.current_model:
 			wx.MessageBox(
 				_("Please select a model"), _("Error"), wx.OK | wx.ICON_ERROR
 			)
-			return
+			return None
 		if self.image_files and not model.vision:
 			vision_models = ", ".join(
 				[m.name or m.id for m in self.current_engine.models if m.vision]
 			)
 			wx.MessageBox(
 				_(
-					"The selected model does not support images. Please select a vision model instead ({})."
-				).format(vision_models),
+					"The selected model does not support images. Please select a vision model instead (%s)."
+				)
+				% vision_models,
 				_("Error"),
 				wx.OK | wx.ICON_ERROR,
 			)
-			return
-		self.submit_btn.Disable()
-		self.stop_completion_btn.Show()
-		system_message = None
-		if self.system_prompt_txt.GetValue():
-			system_message = Message(
-				role=MessageRoleEnum.SYSTEM,
-				content=self.system_prompt_txt.GetValue(),
-			)
-		new_block = MessageBlock(
+			return None
+		return model
+
+	def get_new_msg_block(self, model: ProviderAIModel) -> MessageBlock:
+		return MessageBlock(
 			request=Message(
 				role=MessageRoleEnum.USER,
-				content=self.get_content_for_completion(
-					images_files=self.image_files, prompt=self.prompt.GetValue()
-				),
+				content=self.get_content_for_completion(),
 			),
 			model=model,
 			temperature=self.temperature_spinner.GetValue(),
@@ -1028,9 +1022,23 @@ class ConversationTab(wx.Panel, BaseConversation):
 			max_tokens=self.max_tokens_spin_ctrl.GetValue(),
 			stream=self.stream_mode.GetValue(),
 		)
+
+	@ensure_no_task_running
+	def on_submit(self, event: wx.CommandEvent):
+		if not self.submit_btn.IsEnabled():
+			return
+		if not self.prompt.GetValue() and not self.image_files:
+			self.prompt.SetFocus()
+			return
+		model = self.check_model_selection()
+		if not model:
+			return
+		self.submit_btn.Disable()
+		self.stop_completion_btn.Show()
+		new_block = self.get_new_msg_block(model)
 		completion_kw = {
 			"engine": self.current_engine,
-			"system_message": system_message,
+			"system_message": self.system_message,
 			"conversation": self.conversation,
 			"new_block": new_block,
 			"stream": new_block.stream,
