@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -260,6 +261,8 @@ class BaseConversation:
 			digits=2,
 			name="temperature",
 		)
+		if sys.platform != "win32":
+			return
 		float_spin_accessible = FloatSpinTextCtrlAccessible(
 			win=self.temperature_spinner._textctrl,
 			name=self.temperature_spinner_label.GetLabel().replace("&", ""),
@@ -281,6 +284,8 @@ class BaseConversation:
 			digits=2,
 			name="Top P",
 		)
+		if sys.platform != "win32":
+			return
 		float_spin_accessible = FloatSpinTextCtrlAccessible(
 			win=self.top_p_spinner._textctrl,
 			name=self.top_p_spinner_label.GetLabel().replace("&", ""),
