@@ -111,6 +111,17 @@ providers = [
 		env_var_name_api_key="OPENROUTER_API_KEY",
 		engine_cls_path="basilisk.provider_engine.openrouter_engine.OpenRouterEngine",
 	),
+	# Adding the Ollama provider with the correct local URL
+	Provider(
+		id="ollama",
+		name="Ollama",
+		base_url="http://localhost:11434/v1",  # Local URL for Ollama on Windows
+		api_type=ProviderAPIType.OLLAMA,
+		organization_mode_available=False,
+		require_api_key=True,
+		env_var_name_api_key="OLLAMA_API_KEY",
+		engine_cls_path="basilisk.provider_engine.ollama_engine.OllamaEngine",  # Hypothetical engine class path
+	),
 ]
 
 
